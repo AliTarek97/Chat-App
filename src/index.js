@@ -16,14 +16,22 @@ app.use(express.static(publicDirectoryPath));
 
 
 // socket has information about any new connection
+// connection and disconnect are built in connections
 io.on('connection' , (socket) => {
     console.log('New webSocket connection');
 
-    io.emit('message' , 'Welcome!');
+    socket.emit('message' , 'Welcome!');
+    // it will emit to everbody except that particular connection
+    socket.broadcast.emit('message' , 'A new user has joined!');
 
     socket.on('sendMessage' , (message) => {
         io.emit('message' , message);
     });
+
+    socket.on('disconnect' , () => {
+        //we user io.emit because I have been already disconnected
+        io.emit('message' , 'A user has left')
+    })
 })
 
 server.listen(port , () => {
