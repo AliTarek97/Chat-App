@@ -14,23 +14,16 @@ const io = socketio(server);
 
 app.use(express.static(publicDirectoryPath));
 
-let count = 0 ;
 
 // socket has information about any new connection
 io.on('connection' , (socket) => {
     console.log('New webSocket connection');
 
-    //emitting 'countUpdated' event from the server
-    //any other param which is count in this case will be 
-    //captured on the client side using callback function
-    socket.emit('countUpdated' , count);
+    io.emit('message' , 'Welcome!');
 
-    socket.on('increment' , () => {
-        count++;
-        // every time a client joined all clients will get the count data
-        // instead of socket.emit
-        io.emit('countUpdated' , count);
-    })
+    socket.on('sendMessage' , (message) => {
+        io.emit('message' , message);
+    });
 })
 
 server.listen(port , () => {
