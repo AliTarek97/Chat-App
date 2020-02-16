@@ -28,10 +28,14 @@ io.on('connection' , (socket) => {
         io.emit('message' , message);
     });
 
+    socket.on('sendLocation' , (position) => {
+        io.emit('message' , `https://google.com/maps/?q=${position.latitude},${position.longitude}`);
+    })
+
     socket.on('disconnect' , () => {
         //we user io.emit because I have been already disconnected
         io.emit('message' , 'A user has left')
-    })
+    });
 })
 
 server.listen(port , () => {
