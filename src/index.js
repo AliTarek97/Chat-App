@@ -2,6 +2,7 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
+const Filter = require('bad-words');
 
 const port = process.env.PORT || 3000;
 const publicDirectoryPath = path.join(__dirname , '../public');
@@ -24,12 +25,19 @@ io.on('connection' , (socket) => {
     // it will emit to everbody except that particular connection
     socket.broadcast.emit('message' , 'A new user has joined!');
 
-    socket.on('sendMessage' , (message) => {
+    socket.on('sendMessage' , (message , callback) => {
+        const filter = new Filter();
+
+        if(filter.isProfane(message)){
+            return callback('Profanity is not allowed')
+        }
         io.emit('message' , message);
+        callback();
     });
 
-    socket.on('sendLocation' , (position) => {
+    socket.on('sendLocation' , (position , callback) => {
         io.emit('message' , `https://google.com/maps/?q=${position.latitude},${position.longitude}`);
+        callback();
     })
 
     socket.on('disconnect' , () => {
