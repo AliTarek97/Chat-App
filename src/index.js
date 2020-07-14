@@ -7,6 +7,12 @@ const {
   generateMessage,
   generateLocationMessage,
 } = require("./utils/messages");
+const {
+  addUser,
+  getUser,
+  getUsersInRoom,
+  removeUser,
+} = require("./utils/user");
 
 const port = process.env.PORT || 3000;
 const publicDirectoryPath = path.join(__dirname, "../public");
@@ -24,13 +30,20 @@ app.use(express.static(publicDirectoryPath));
 io.on("connection", (socket) => {
   console.log("New webSocket connection");
 
-  socket.on("join", ({ username, room }) => {
-    socket.join(room);
+  socket.on("join", (options, callback) => {
+    const { error, user } = addUser({ id: socket.id, ...options });
+
+    if (error) return callback(error);
+    // we are using user to make sure that we are using the same
+    // data that are stored is users array
+    socket.join(user.room);
     socket.emit("message", generateMessage("Welcome!"));
     // it will emit to everbody except that particular connection
     socket.broadcast
-      .to(room)
-      .emit("message", generateMessage(`${username} has joined!`));
+      .to(user.room)
+      .emit("message", generateMessage(`${user.username} has joined!`));
+
+    callback();
   });
 
   socket.on("sendMessage", (message, callback) => {
@@ -54,8 +67,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    //we user io.emit because I have been already disconnected
-    io.emit("message", generateMessage("A user has left"));
+    const user = removeUser(socket.id);
+
+    if (user) {
+      //we user io.emit because I have been already disconnected
+      io.to(user.room).emit(
+        "message",
+        generateMessage(`${user.username} has left`)
+      );
+    }
   });
 });
 
