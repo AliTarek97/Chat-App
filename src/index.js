@@ -3,6 +3,7 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
+const { generateMessage } = require("./utils/messages");
 
 const port = process.env.PORT || 3000;
 const publicDirectoryPath = path.join(__dirname, "../public");
@@ -20,9 +21,9 @@ app.use(express.static(publicDirectoryPath));
 io.on("connection", (socket) => {
   console.log("New webSocket connection");
 
-  socket.emit("message", "Welcome!");
+  socket.emit("message", generateMessage("Welcome!"));
   // it will emit to everbody except that particular connection
-  socket.broadcast.emit("message", "A new user has joined!");
+  socket.broadcast.emit("message", generateMessage("A new user has joined!"));
 
   socket.on("sendMessage", (message, callback) => {
     const filter = new Filter();
@@ -30,7 +31,7 @@ io.on("connection", (socket) => {
     if (filter.isProfane(message)) {
       return callback("Profanity is not allowed");
     }
-    io.emit("message", message);
+    io.emit("message", generateMessage(message));
     callback();
   });
 
@@ -44,7 +45,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     //we user io.emit because I have been already disconnected
-    io.emit("message", "A user has left");
+    io.emit("message", generateMessage("A user has left"));
   });
 });
 
